@@ -181,7 +181,7 @@ test('traffic timing pairs real ordering to the scheduling change and guards re-
       status: 200,
       headers: { get: () => null },
       json: async () => (String(url).includes('/api/tomtom/status')
-        ? { hasKey: false }
+        ? { hasKey: true }
         : { elements: [] }),
     });
     globalThis.setTimeout = (callback, delay) => {
