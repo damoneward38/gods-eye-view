@@ -76,7 +76,11 @@ export function layerFeedState(stats = {}) {
   const hasExplicitFallback = typeof state.fallback === 'boolean';
   const hasPriorData = Number(state.count) > 0 || Boolean(state.lastUpdate);
   const presentedError = state.error || state.lastError || state.managerRefreshError;
-  if (['unavailable', 'offline', 'down', 'error'].includes(status)) return 'unavailable';
+  if (
+    ['unavailable', 'offline', 'down', 'error'].includes(status)
+    || state.unavailable === true
+    || state.available === false
+  ) return 'unavailable';
   if (
     (presentedError || state.unavailable === true || state.available === false)
     && !hasPriorData

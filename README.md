@@ -46,9 +46,11 @@ Flight transponders, ship beacons, orbital elements, seismographs, and public ca
 
 > Half the magic is that it looks like a forbidden cockpit. The other half is that every line of code is inspectable.
 
-Most feeds are live or regularly refreshed. Traffic is simulated along real
-roads using aggregate location data. CCTV camera poses and rocket launch
-trajectories are coarse estimates.
+Most feeds are live or regularly refreshed. Traffic markers are an illustrative,
+animated road-flow visualization driven by TomTom aggregate speeds when the
+provider is configured; they are not observed individual vehicles. The layer
+is unavailable without a responding TomTom feed. CCTV camera poses and rocket
+launch trajectories are coarse estimates.
 
 Start with the included data sources, then add your own. Each layer is a separate module.
 
@@ -272,7 +274,7 @@ Thirteen layers and map sources. **Eleven have a keyless path.** Some offer addi
 | 🚢 **Live Vessels** | Thousands of ships worldwide | AISStream | 🟡 |
 | 🛰️ **Satellites** | 838-object catalog, color-coded by class with a live legend — the **DENSE** chip drops in the whole Starlink shell | CelesTrak | 🟢 |
 | 🌍 **Earthquakes** | Global seismic activity, last 24h | USGS | 🟢 |
-| 🚗 **Traffic** | Simulated vehicles on OSM roads. With TomTom, live flow speeds drive the simulation and congestion colors below ~8 km; individual vehicle positions are not live observations | TomTom + OSM | 🟢 simulation · 🟡 live flow speeds |
+| 🚗 **Traffic** | With TomTom configured, live road-flow levels drive an illustrative animated road overlay below ~8 km; markers are not observed individual vehicles. Without a configured and responding TomTom provider, the layer is unavailable and draws no synthetic traffic | TomTom + OSM | 🟡 live flow visualization · unavailable without provider |
 | 📹 **CCTV Mesh** | ~800 public cameras projected *into* the 3D space — Austin · California (Caltrans) · London (TfL). Positions are published; poses are estimated priors **you calibrate by dragging a gizmo on the camera itself** | City APIs | 🟢 |
 | 📻 **Radio** | Geolocated world radio with an **analog tuner** — drag the needle across up to 750 stations and the globe flies to each broadcaster | Radio Browser / broadcasters | 🟢 |
 | 🚲 **Bikeshare** | Live station availability | GBFS | 🟢 |
@@ -384,7 +386,7 @@ Six keys. Four have a free tier, and the two 🔴 ones are metered:
 | 🔴 | **OpenAI** | 🎙️ The voice experience + AI HUD summary. The mini model works; the standard model is noticeably smarter. Want Gemini or another provider behind the mic? PRs welcome | [platform.openai.com](https://platform.openai.com) — metered, see costs below |
 | 🟡 | **AISStream** | 🚢 Live global ships | [aisstream.io](https://aisstream.io) — free signup |
 | 🟡 | **NASA FIRMS** | 🔥 Live active fires | [firms.modaps.eosdis.nasa.gov](https://firms.modaps.eosdis.nasa.gov/api/map_key/) — free |
-| 🟡 | **TomTom** | 🚦 Live flow speeds and congestion colors for the simulated traffic layer | [developer.tomtom.com](https://developer.tomtom.com) — free tier available |
+| 🟡 | **TomTom** | 🚦 Live road-flow speeds and congestion colors for illustrative animated markers | [developer.tomtom.com](https://developer.tomtom.com) — free tier available |
 
 ![Diving from city-scale live congestion straight into an intersection's public camera](docs/media/05-traffic-to-cctv.gif)
 

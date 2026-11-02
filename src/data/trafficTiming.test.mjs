@@ -181,7 +181,7 @@ test('traffic timing pairs real ordering to the scheduling change and guards re-
       status: 200,
       headers: { get: () => null },
       json: async () => (String(url).includes('/api/tomtom/status')
-        ? { hasKey: false }
+        ? { hasKey: true }
         : { elements: [] }),
     });
     globalThis.setTimeout = (callback, delay) => {
@@ -239,6 +239,8 @@ test('traffic timing pairs real ordering to the scheduling change and guards re-
       end: 'traffic:stale:mark',
     });
     trafficLayer.enable(viewer);
+    // Provider status is now a required asynchronous gate before render hooks install.
+    await new Promise((resolve) => setImmediate(resolve));
     assert.equal(traffic.getTrafficTimingDiagnostics().marksInstalled, 1);
     assert.equal(moveEnd.listenerCount(), 1, 'marksInstalled must represent a live listener');
     assert.equal(performance.getEntriesByName('traffic:stale:mark').length, 0);

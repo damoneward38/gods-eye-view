@@ -11,7 +11,7 @@ const run = promisify(execFile);
 const bashTest = process.platform === 'win32' ? test.skip : test;
 
 async function launch(overrides = {}, dotenv = '') {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'gev-cctv-launch-'));
+  const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'gev-cctv-launch-')));
   try {
     await fs.mkdir(path.join(root, 'scripts'));
     await fs.mkdir(path.join(root, 'bin'));
