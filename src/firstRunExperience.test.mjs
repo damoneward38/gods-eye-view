@@ -434,16 +434,13 @@ test('the tile is the FULLY CONFIGURED experience: quakes and fires together', (
   const environmental = FIRST_RUN_MISSIONS.environmental;
   assert.deepEqual(environmental.layerIds, ['earthquakes', 'local-firms']);
 
-  // Keyless, the honest surface is the LAYER ROW ("KEY REQUIRED"), which the
-  // FIRMS layer already reports. The misleading part is the GLOBAL chip folding
-  // that row into LOAD FAILED — a defect in the shared state machine, ledgered
-  // post-launch, and the note must stay where the next editor will read it
-  // rather than being re-discovered as a launcher bug.
-  const module = fs.readFileSync(new URL('./firstRunExperience.js', import.meta.url), 'utf8');
-  const table = module.slice(module.indexOf('  environmental: Object.freeze({'), module.indexOf('  explore:'));
-  assert.match(table, /KEY REQUIRED/);
-  assert.match(table, /src\/loadingFeedback\.js/);
-  assert.match(table, /LEDGERED post-launch/);
+  // Keyless, the layer row and the shared global status both say KEY REQUIRED;
+  // an absent optional credential is not reported as a failed provider request.
+  const firms = fs.readFileSync(new URL('./data/firmsHeatmap.js', import.meta.url), 'utf8');
+  const feedback = fs.readFileSync(new URL('./loadingFeedback.js', import.meta.url), 'utf8');
+  assert.match(firms, /keyRequired: _keyRequired/);
+  assert.match(feedback, /'key-required': 'KEY REQUIRED'/);
+  assert.match(feedback, /configure credentials in Provider Settings/);
 });
 
 test('every visitor gets the same tile — there is no degraded keyless variant', async () => {

@@ -24,7 +24,9 @@ export function normalizeLayerLoading(layer = {}) {
   const unavailable = !stoppingInstallations && (stats.unavailable === true
     || stats.available === false
     || ['unavailable', 'offline', 'down', 'error'].includes(status));
-  const keyRequired = stats.keyRequired === true || stats.missingKey === true;
+  const keyRequired = stats.keyRequired === true || stats.missingKey === true
+    || String(stats.error || '').trim().toUpperCase() === 'KEY REQUIRED'
+    || String(stats.loadingLabel || '').trim().toUpperCase() === 'KEY REQUIRED';
   const degraded = stats.degraded === true || Boolean(error);
   const accepted = Boolean(stats.lastUpdate) || count > 0;
   return {
@@ -50,10 +52,13 @@ export function normalizeLayerLoading(layer = {}) {
 function terminalFromParticipantStats(summary, participantIds) {
   if (!participantIds?.length) return null;
   const participants = new Set(participantIds);
-  return summary.records.some((record) => participants.has(record.id)
-    && (record.error || record.unavailable || record.keyRequired))
-    ? 'error'
-    : null;
+  const failures = summary.records.filter((record) => participants.has(record.id)
+    && (record.error || record.unavailable || record.keyRequired));
+  if (!failures.length) return null;
+  // Missing optional credentials are an actionable configuration state, not
+  // an upstream outage or failed operation. A real provider error in any
+  // participant still wins over this informational terminal.
+  return failures.every((record) => record.keyRequired) ? 'key-required' : 'error';
 }
 
 /** Aggregate all manager layers without changing their lifecycle authority. */
@@ -136,7 +141,7 @@ export function canPresentDeferredStatusNotice(expectedGeneration, currentGenera
  */
 export function presentGlobalLoadingStatus(notice, loadingState, summary, nowMs = 0) {
   const loadingPresentation = presentLoadingFeedback(loadingState, summary, nowMs);
-  if (['error', 'retry'].includes(loadingPresentation?.state)) return loadingPresentation;
+  if (['error', 'retry', 'key-required'].includes(loadingPresentation?.state)) return loadingPresentation;
   return presentGlobalStatusNotice(notice, nowMs) || loadingPresentation;
 }
 
@@ -178,9 +183,9 @@ export function reduceTrafficSyncFeedback(previous, {
       busy: true,
       visible: true,
       confirmationUntil: 0,
-      // Neutral default: the layer always supplies its own LIVE/SIMULATED
-      // label, and a fallback string must never claim a live feed on a
-      // keyless build.
+      // Neutral default: the layer always supplies its own LIVE/UNAVAILABLE
+      // label, and the fallback string must never claim a live feed when the
+      // provider is not configured.
       label: label || 'syncing road network',
       progressText: hasProgress ? `${progressPct}%` : '...',
     };
@@ -217,7 +222,7 @@ function terminalFromEvent(event) {
 }
 
 function mergeTerminalOutcome(current, next) {
-  const severity = { complete: 1, cancelled: 2, error: 3 };
+  const severity = { complete: 1, 'key-required': 2, cancelled: 3, error: 4 };
   if (!next) return current || null;
   if (!current || severity[next] > severity[current]) return next;
   return current;
@@ -305,12 +310,18 @@ export function presentLoadingFeedback(state, summary, nowMs) {
   }
   if (!state?.visible) return null;
   if (state.phase === 'terminal') {
-    const labels = { complete: 'LOAD COMPLETE', cancelled: 'LOAD CANCELLED', error: 'LOAD FAILED' };
+    const labels = { complete: 'LOAD COMPLETE', 'key-required': 'KEY REQUIRED', cancelled: 'LOAD CANCELLED', error: 'LOAD FAILED' };
     const label = state.operation === 'disabling' && state.terminal === 'complete'
       ? 'LIVE DATA OFF'
       : state.terminal === 'complete' && state.activeIds?.length === 1 && state.activeIds[0] === 'military-installations'
         ? 'MAPPED SITES LOADED' : labels[state.terminal] || 'LOAD COMPLETE';
-    return { state: state.terminal, label, detail: '' };
+    const missingProviders = state.terminal === 'key-required'
+      ? summary.records.filter((record) => (state.activeIds || []).includes(record.id) && record.keyRequired)
+      : [];
+    const detail = missingProviders.length
+      ? `${missingProviders.map((record) => record.label).join(' · ')} · configure credentials in Provider Settings`
+      : '';
+    return { state: state.terminal, label, detail };
   }
   const active = summary.active;
   if (active.length === 1 && active[0].installationRetry && !summary.disabling) {

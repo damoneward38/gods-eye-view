@@ -2056,7 +2056,7 @@ body.ui-clean-view #scene-runtime.active {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-#global-loading-status:is([data-state='complete'], [data-state='cancelled'], [data-state='error']) {
+#global-loading-status:is([data-state='complete'], [data-state='cancelled'], [data-state='error'], [data-state='key-required']) {
   justify-content: center;
   text-align: center;
 }
@@ -2064,6 +2064,9 @@ body.ui-clean-view #scene-runtime.active {
   display: none;
 }
 #global-loading-status[data-state='error'] { border-color: rgba(255, 98, 82, 0.55); color: #ff9b8e; }
+#global-loading-status[data-state='key-required'] { border-color: rgba(255, 212, 136, 0.55); color: #ffd488; }
+#global-loading-status[data-state='key-required'] #global-loading-label,
+#global-loading-status[data-state='key-required'] #global-loading-detail { color: #ffd488; }
 #global-loading-status[data-state='error'] #global-loading-label,
 #global-loading-status[data-state='error'] #global-loading-detail { color: #ff9b8e; }
 #global-loading-status[data-state='cancelled'] { color: #ffd488; }
