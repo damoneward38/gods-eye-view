@@ -321,6 +321,8 @@ export function createFirmsHeatmapLayer({
         loading: _loading,
         stale: _stale,
         error: _keyRequired ? 'KEY REQUIRED' : (_stale ? staleText : _error),
+        keyRequired: _keyRequired,
+        status: _keyRequired ? 'key-required' : (_stale ? 'stale' : (_error ? 'unavailable' : (_lastUpdate ? 'ready' : 'idle'))),
         loadingLabel,
       };
     },

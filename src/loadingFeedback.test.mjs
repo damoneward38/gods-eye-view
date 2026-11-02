@@ -238,7 +238,7 @@ test('terminal loading feedback centers its label without an empty detail slot',
   const css = readFileSync(new URL('../style.css', import.meta.url), 'utf8');
   assert.match(
     css,
-    /#global-loading-status:is\(\[data-state='complete'\], \[data-state='cancelled'\], \[data-state='error'\]\)\s*\{[\s\S]*?justify-content:\s*center;[\s\S]*?text-align:\s*center;/,
+    /#global-loading-status:is\(\[data-state='complete'\], \[data-state='cancelled'\], \[data-state='error'\], \[data-state='key-required'\]\)\s*\{[\s\S]*?justify-content:\s*center;[\s\S]*?text-align:\s*center;/,
   );
   assert.match(
     css,
@@ -322,6 +322,26 @@ test('AIS first-connect grace expiry reports failure even without a terminal man
   assert.equal(presentLoadingFeedback(state, unavailable, 300).label, 'LOAD FAILED');
 });
 
+test('optional missing provider credentials finish as KEY REQUIRED, not LOAD FAILED', () => {
+  const enabling = aggregateLayerLoading([{
+    id: 'local-firms', name: 'FIRMS Active Fires', lifecycleState: 'enabling', stats: { loading: true },
+  }]);
+  let state = reduceLoadingFeedback(createLoadingFeedbackState(), enabling, 0);
+  state = reduceLoadingFeedback(state, enabling, 200);
+  const keyRequired = aggregateLayerLoading([{
+    id: 'local-firms', name: 'FIRMS Active Fires', enabled: true, lifecycleState: 'enabled',
+    stats: { loading: false, keyRequired: true, error: 'KEY REQUIRED', status: 'key-required' },
+  }]);
+  state = reduceLoadingFeedback(state, keyRequired, 250, {
+    type: 'visibility', layerId: 'local-firms', enabled: true,
+  });
+  assert.equal(state.terminal, 'key-required');
+  const presentation = presentLoadingFeedback(state, keyRequired, 250);
+  assert.equal(presentation.state, 'key-required');
+  assert.equal(presentation.label, 'KEY REQUIRED');
+  assert.match(presentation.detail, /FIRMS Active Fires.*Provider Settings/);
+});
+
 test('participant stats failure outranks a simultaneous visibility completion', () => {
   const enabling = aggregateLayerLoading([{
     id: 'ais-live-vessels',
@@ -337,7 +357,7 @@ test('participant stats failure outranks a simultaneous visibility completion', 
     name: 'AIS Vessels',
     enabled: true,
     lifecycleState: 'enabled',
-    stats: { loading: false, keyRequired: true },
+    stats: { loading: false, unavailable: true, error: 'AIS provider returned HTTP 503' },
   }]);
   state = reduceLoadingFeedback(state, missingKey, 250, {
     type: 'visibility', layerId: 'ais-live-vessels', enabled: true,
@@ -463,7 +483,7 @@ test('a flow failure landing after the roads settle still ends the batch as LOAD
     loading: false,
     count: 544,
     mode: 'live',
-    error: 'SIMULATED — TomTom daily budget reached',
+    error: 'UNAVAILABLE — TomTom daily budget reached',
   });
   state = reduceLoadingFeedback(state, flowFailed, 900);
   assert.equal(state.terminal, 'error');
@@ -562,7 +582,7 @@ test('work still in flight keeps its progress number beside a label that has non
 
 test('resets traffic feedback on disable and permits a later fresh cycle', () => {
   const busy = { enabled: true, stats: { loading: true } };
-  const idle = { enabled: true, stats: { loading: false, loadingLabel: 'simulated traffic' } };
+  const idle = { enabled: true, stats: { loading: false, loadingLabel: 'UNAVAILABLE — TomTom key not configured' } };
   let state = reduceTrafficSyncFeedback(createTrafficSyncFeedbackState(), busy, 0);
   state = reduceTrafficSyncFeedback(state, idle, 100);
   state = reduceTrafficSyncFeedback(state, { enabled: false, stats: {}, forceShow: true }, 200);
@@ -575,7 +595,7 @@ test('resets traffic feedback on disable and permits a later fresh cycle', () =>
 });
 
 test('new busy work replaces confirmation and force-show remains bounded', () => {
-  const idle = { enabled: true, stats: { loadingLabel: 'simulated traffic' } };
+  const idle = { enabled: true, stats: { loadingLabel: 'UNAVAILABLE — TomTom key not configured' } };
   const busy = {
     enabled: true,
     stats: { phaseProgressPct: -20, prewarmQueueDepth: 1, phaseLabel: 'warming roads' },
